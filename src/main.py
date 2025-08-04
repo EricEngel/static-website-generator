@@ -1,7 +1,7 @@
 from textnode import *
 from htmlnode import *
 from enum import Enum
-import re
+import re, os, shutil
 
 BlockType = Enum('BlockType', ['PARAGRAPH', 'HEADING', 'CODE', 'QUOTE', 'UNORDERED_LIST', 'ORDERED_LIST'])
 
@@ -200,9 +200,27 @@ def markdown_to_html_node(markdown):
     return parent
 
 
+def copy_directory(source, destination):
+    if os.path.exists(destination):
+        shutil.rmtree(destination)
+        print(f"Deleted existing directory: {destination}")
+    os.mkdir(destination)
+    print(f"Creating directory: {destination}")
+
+    for item in os.listdir(source):
+        source_path = os.path.join(source, item)
+        destination_path = os.path.join(destination, item)
+        if os.path.isfile(source_path):
+            shutil.copy(source_path, destination_path)
+            print(f"Copied file: {source_path} to {destination_path}")
+        elif os.path.isdir(source_path):
+            copy_directory(source_path, destination_path)
+
+
 def main():
-    obj = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
-    print(obj)
+    #obj = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
+    #print(obj)
+    copy_directory("./static/", "./public/")
 
 
 if __name__ == "__main__":
