@@ -1,6 +1,9 @@
 from textnode import *
 from htmlnode import *
+from enum import Enum
 import re
+
+BlockType = Enum('BlockType', ['PARAGRAPH', 'HEADING', 'CODE', 'QUOTE', 'UNORDERED_LIST', 'ORDERED_LIST'])
 
 
 def text_node_to_html_node(text_node):
@@ -112,6 +115,89 @@ def text_to_textnodes(text):
     result = split_nodes_link(result)
     result = split_nodes_image(result)
     return result
+
+
+def markdown_to_blocks(markdown):
+    blocks = markdown.split('\n\n')
+    new_blocks = []
+    for i in range(len(blocks)):
+        item = blocks[i].strip()
+        if len(blocks[i]) != 0:
+            new_blocks.append(item)
+    return new_blocks
+
+
+def block_to_block_type(block):
+    lines = block.split('\n')
+
+    if lines[0][:1] == '#':
+        return BlockType.HEADING
+    elif lines[0][:3] == "```" and lines[len(lines) - 1][-3:] == "```":
+        return BlockType.CODE
+    elif lines[0][:1] == '>':
+        valid_quote = True
+        for line in lines:
+            if line[:1] != ">":
+                valid_quote = False
+        if valid_quote:
+            return BlockType.QUOTE
+    elif lines[0][:2] == '- ':
+        valid_unordered = True
+        for line in lines:
+            if line[:2] != "- ":
+                valid_unordered = False
+        if valid_unordered:
+            return BlockType.UNORDERED_LIST
+    elif lines[0][:1] >= '0' and lines[0][:1] <= '9':
+        valid_ordered = True
+        for line in lines:
+            if line[:1] < '0' and line[:1] > '9' and line[1:1] != ".":
+                valid_unordered = False
+        if valid_ordered:
+            return BlockType.ORDERED_LIST
+    else:
+        return BlockType.PARAGRAPH
+
+
+def text_to_children(text):
+    nodes = text_to_textnodes(text)
+    children = []
+    for node in nodes:
+        children.append(text_node_to_html_node(node))
+    return children
+
+
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+    nodes = []
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        match block_type:
+            case BlockType.PARAGRAPH:
+                nodes.append( ParentNode("p", text_to_children(block.replace('\n', ' '))) )
+            case BlockType.HEADING:
+                if block[:6] == "######":
+                    nodes.append( ParentNode("h6", text_to_children(block)) )
+                elif block[:5] == "#####":
+                    nodes.append( ParentNode("h5", text_to_children(block)) )
+                elif block[:4] == "####":
+                    nodes.append( ParentNode("h4", text_to_children(block)) )
+                elif block[:3] == "###":
+                    nodes.append( ParentNode("h3", text_to_children(block)) )
+                elif block[:2] == "##":
+                    nodes.append( ParentNode("h2", text_to_children(block)) )
+                else:
+                    nodes.append( ParentNode("h1", text_to_children(block)) )
+            case BlockType.CODE:
+                nodes.append( ParentNode("pre", [text_node_to_html_node(TextNode(block[4:-3], TextType.CODE))]) )
+            case BlockType.QUOTE:
+                nodes.append( ParentNode("blockquote", text_to_children(block)) )
+            case BlockType.UNORDERED_LIST:
+                nodes.append( ParentNode("ul", text_to_children(block)) )
+            case BlockType.ORDERED_LIST:
+                nodes.append( ParentNode("ol", text_to_children(block)) )
+    parent = ParentNode("div", nodes)
+    return parent
 
 
 def main():
