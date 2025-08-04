@@ -1,4 +1,7 @@
 public/
+content/blog/
+content/contact/
+static/images/
 __pycache__/
 test.sh
 src/test_*

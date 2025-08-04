@@ -200,12 +200,20 @@ def markdown_to_html_node(markdown):
     return parent
 
 
+def extract_title(markdown):
+    lines = markdown.split('\n')
+    for line in lines:
+        if line[:1] == "#" and line[:2] != "##":
+            return line[2:].strip()
+    raise Exception("Markdown error: h1 header missing.")
+
+
 def copy_directory(source, destination):
     if os.path.exists(destination):
         shutil.rmtree(destination)
         print(f"Deleted existing directory: {destination}")
     os.mkdir(destination)
-    print(f"Creating directory: {destination}")
+    print(f"Created directory: {destination}")
 
     for item in os.listdir(source):
         source_path = os.path.join(source, item)
@@ -217,11 +225,66 @@ def copy_directory(source, destination):
             copy_directory(source_path, destination_path)
 
 
-def main():
-    #obj = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
-    #print(obj)
-    copy_directory("./static/", "./public/")
 
+def generate_page(from_path, destination_path, template_path):
+    if not os.path.exists(from_path):
+        raise Exception("Input file missing!")
+    if os.path.exists(destination_path):
+        raise Exception("Destination file already exists!")
+    if not os.path.exists(template_path):
+        raise Exception("Template file missing!")
+    
+    print(f"Generating page from {from_path} to {destination_path} using {template_path}.")
+
+    # Read the from_path file contents
+    md = ""
+    f = open(from_path, mode='r')
+    md = f.read()
+    f.close()
+
+    # Read the template_path file contents
+    template = ""
+    f = open(template_path, mode='r')
+    template = f.read()
+    f.close()
+
+    # Retrieve relevant data to be inserted into template
+    title = extract_title(md)
+    html = markdown_to_html_node(md).to_html()
+
+    # Insert data into template
+    final = template.replace("{{ Title }}", title, 1).replace("{{ Content }}", html, 1)
+
+    # Ensure directory structure exists for destination_path
+    if not os.path.exists(os.path.dirname(destination_path)):
+        os.makedirs(os.path.dirname(destination_path))
+
+    # Write the new HTML file at destination_path
+    f = open(destination_path, mode='w')
+    f.write(final)
+    f.close()
+
+def generate_pages_recursive(content_path, destination_path, template_path):
+    # Recursively generate pages
+    for root, dirs, files in os.walk(content_path):
+        for file in files:
+            if file.endswith(".md"):
+                from_path = os.path.join(root, file)
+                
+                # Construct destination path
+                relative_path = os.path.relpath(from_path, content_path)
+                # Correctly join destination_path with the relative directory
+                destination_dir = os.path.join(destination_path, os.path.dirname(relative_path)) 
+                destination_file = os.path.splitext(os.path.basename(relative_path))[0] + ".html"
+                # Use a new variable for the full destination path to avoid overwriting the loop variable
+                full_destination_path = os.path.join(destination_dir, destination_file)
+
+                # Pass the correctly constructed full_destination_path
+                generate_page(from_path, full_destination_path, template_path)
+
+def main():
+    copy_directory("./static/", "./public/")
+    generate_pages_recursive("./content/", "./public/", "./template.html")
 
 if __name__ == "__main__":
     main()
