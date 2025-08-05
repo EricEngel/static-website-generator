@@ -167,6 +167,18 @@ def text_to_children(text):
     return children
 
 
+def add_li_to_block(block):
+    new_block = ""
+    lines = block.split('\n')
+    for line in lines:
+        if line[:1] == "-":
+            line = line[1:].strip()
+        else:
+            line = line.split('.', 1)[1].strip()
+        new_block += f"<li>{line}</li>\n"
+    return new_block
+
+
 def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)
     nodes = []
@@ -193,9 +205,11 @@ def markdown_to_html_node(markdown):
             case BlockType.QUOTE:
                 nodes.append( ParentNode("blockquote", text_to_children(block)) )
             case BlockType.UNORDERED_LIST:
-                nodes.append( ParentNode("ul", text_to_children(block)) )
+                # We need to preprocess the block here in order to surround each item with it's own <li> tags
+                nodes.append( ParentNode("ul", text_to_children(add_li_to_block(block))) )
             case BlockType.ORDERED_LIST:
-                nodes.append( ParentNode("ol", text_to_children(block)) )
+                # Here too.
+                nodes.append( ParentNode("ol", text_to_children(add_li_to_block(block))) )
     parent = ParentNode("div", nodes)
     return parent
 
