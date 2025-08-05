@@ -1,7 +1,7 @@
 from textnode import *
 from htmlnode import *
 from enum import Enum
-import re, os, shutil
+import os, sys, shutil, re
 
 BlockType = Enum('BlockType', ['PARAGRAPH', 'HEADING', 'CODE', 'QUOTE', 'UNORDERED_LIST', 'ORDERED_LIST'])
 
@@ -226,7 +226,7 @@ def copy_directory(source, destination):
 
 
 
-def generate_page(from_path, destination_path, template_path):
+def generate_page(site_path, from_path, destination_path, template_path):
     if not os.path.exists(from_path):
         raise Exception("Input file missing!")
     if os.path.exists(destination_path):
@@ -253,7 +253,7 @@ def generate_page(from_path, destination_path, template_path):
     html = markdown_to_html_node(md).to_html()
 
     # Insert data into template
-    final = template.replace("{{ Title }}", title, 1).replace("{{ Content }}", html, 1)
+    final = template.replace("{{ Title }}", title, 1).replace("{{ Content }}", html, 1).replace('href="/', f'href="{site_path}', 1).replace('src="/', f'src="{site_path}', 1)
 
     # Ensure directory structure exists for destination_path
     if not os.path.exists(os.path.dirname(destination_path)):
@@ -264,7 +264,7 @@ def generate_page(from_path, destination_path, template_path):
     f.write(final)
     f.close()
 
-def generate_pages_recursive(content_path, destination_path, template_path):
+def generate_pages_recursive(site_path, content_path, destination_path, template_path):
     # Recursively generate pages
     for root, dirs, files in os.walk(content_path):
         for file in files:
@@ -280,11 +280,23 @@ def generate_pages_recursive(content_path, destination_path, template_path):
                 full_destination_path = os.path.join(destination_dir, destination_file)
 
                 # Pass the correctly constructed full_destination_path
-                generate_page(from_path, full_destination_path, template_path)
+                generate_page(site_path, from_path, full_destination_path, template_path)
 
 def main():
-    copy_directory("./static/", "./public/")
-    generate_pages_recursive("./content/", "./public/", "./template.html")
+    # Command line arguments. Show help, if requested. Otherwise, set the basepath.
+    if sys.argv.__len__() == 2:
+        if sys.argv[1] == "--help" or sys.argv[1] == "-h":
+            print("Usage: python3 main.py <site_root>")
+            sys.exit(1)
+        else:
+            basepath = sys.argv[1]
+            if basepath[-1:] != "/":
+                basepath = basepath + "/"
+    else:
+        basepath = "/"
+
+    copy_directory("./static/", "./docs/")
+    generate_pages_recursive(basepath, "./content/", "./docs/", "./template.html")
 
 if __name__ == "__main__":
     main()
