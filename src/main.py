@@ -167,6 +167,28 @@ def text_to_children(text):
     return children
 
 
+def remove_symbols_from_block(block):
+    new_block = ""
+    lines = block.split('\n')
+    for line in lines:
+        if line[:6] == "######":
+            line = line[6:].strip()
+        elif line[:5] == "#####":
+            line = line[5:].strip()
+        elif line[:4] == "####":
+            line = line[4:].strip()
+        elif line[:3] == "###":
+            line = line[3:].strip()
+        elif line[:2] == "##":
+            line = line[2:].strip()
+        elif line[:1] == "#":
+            line = line[1:].strip()
+        elif line[:1] == ">":
+            line = line[1:].strip()
+        new_block += f"{line}\n"
+    return new_block
+
+
 def add_li_to_block(block):
     new_block = ""
     lines = block.split('\n')
@@ -189,26 +211,24 @@ def markdown_to_html_node(markdown):
                 nodes.append( ParentNode("p", text_to_children(block.replace('\n', ' '))) )
             case BlockType.HEADING:
                 if block[:6] == "######":
-                    nodes.append( ParentNode("h6", text_to_children(block)) )
+                    nodes.append( ParentNode("h6", text_to_children(remove_symbols_from_block(block))) )
                 elif block[:5] == "#####":
-                    nodes.append( ParentNode("h5", text_to_children(block)) )
+                    nodes.append( ParentNode("h5", text_to_children(remove_symbols_from_block(block))) )
                 elif block[:4] == "####":
-                    nodes.append( ParentNode("h4", text_to_children(block)) )
+                    nodes.append( ParentNode("h4", text_to_children(remove_symbols_from_block(block))) )
                 elif block[:3] == "###":
-                    nodes.append( ParentNode("h3", text_to_children(block)) )
+                    nodes.append( ParentNode("h3", text_to_children(remove_symbols_from_block(block))) )
                 elif block[:2] == "##":
-                    nodes.append( ParentNode("h2", text_to_children(block)) )
+                    nodes.append( ParentNode("h2", text_to_children(remove_symbols_from_block(block))) )
                 else:
-                    nodes.append( ParentNode("h1", text_to_children(block)) )
+                    nodes.append( ParentNode("h1", text_to_children(remove_symbols_from_block(block))) )
             case BlockType.CODE:
                 nodes.append( ParentNode("pre", [text_node_to_html_node(TextNode(block[4:-3], TextType.CODE))]) )
             case BlockType.QUOTE:
-                nodes.append( ParentNode("blockquote", text_to_children(block)) )
+                nodes.append( ParentNode("blockquote", text_to_children(remove_symbols_from_block(block))) )
             case BlockType.UNORDERED_LIST:
-                # We need to preprocess the block here in order to surround each item with it's own <li> tags
                 nodes.append( ParentNode("ul", text_to_children(add_li_to_block(block))) )
             case BlockType.ORDERED_LIST:
-                # Here too.
                 nodes.append( ParentNode("ol", text_to_children(add_li_to_block(block))) )
     parent = ParentNode("div", nodes)
     return parent
