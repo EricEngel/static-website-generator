@@ -3,7 +3,7 @@ from htmlnode import *
 from enum import Enum
 import os, sys, shutil, re
 
-BlockType = Enum('BlockType', ['PARAGRAPH', 'HEADING', 'CODE', 'QUOTE', 'UNORDERED_LIST', 'ORDERED_LIST'])
+BlockType = Enum('BlockType', ['PARAGRAPH', 'HEADING', 'CODE', 'QUOTE', 'UNORDERED_LIST', 'ORDERED_LIST', 'HORIZONTALRULE'])
 
 
 def text_node_to_html_node(text_node):
@@ -155,6 +155,8 @@ def block_to_block_type(block):
                 valid_unordered = False
         if valid_ordered:
             return BlockType.ORDERED_LIST
+    elif lines[0] == "---":
+        return BlockType.HORIZONTALRULE
     else:
         return BlockType.PARAGRAPH
 
@@ -230,6 +232,8 @@ def markdown_to_html_node(markdown):
                 nodes.append( ParentNode("ul", text_to_children(add_li_to_block(block))) )
             case BlockType.ORDERED_LIST:
                 nodes.append( ParentNode("ol", text_to_children(add_li_to_block(block))) )
+            case BlockType.HORIZONTALRULE:
+                nodes.append( LeafNode("hr", "") )
     parent = ParentNode("div", nodes)
     return parent
 

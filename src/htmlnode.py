@@ -32,6 +32,8 @@ class LeafNode(HTMLNode):
             raise ValueError("A value must be supplied!")
         if self.tag is None:
             return self.value
+        if self.tag == "hr":
+            return "<hr>\n"
         return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
 
 
