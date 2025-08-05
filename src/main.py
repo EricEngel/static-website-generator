@@ -253,7 +253,7 @@ def generate_page(site_path, from_path, destination_path, template_path):
     html = markdown_to_html_node(md).to_html()
 
     # Insert data into template
-    final = template.replace("{{ Title }}", title, 1).replace("{{ Content }}", html, 1).replace('href="/', f'href="{site_path}', 1).replace('src="/', f'src="{site_path}', 1)
+    final = template.replace("{{ Title }}", title, 1).replace("{{ Content }}", html, 1).replace('href="/', f'href="{site_path}').replace('src="/', f'src="{site_path}')
 
     # Ensure directory structure exists for destination_path
     if not os.path.exists(os.path.dirname(destination_path)):
