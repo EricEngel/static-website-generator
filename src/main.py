@@ -187,7 +187,7 @@ def remove_symbols_from_block(block):
             line = line[1:].strip()
         elif line[:1] == ">":
             line = line[1:].strip()
-        new_block += f"{line}\n"
+        new_block += f"{line}"
     return new_block
 
 
@@ -319,6 +319,7 @@ def generate_pages_recursive(site_path, content_path, destination_path, template
 
                 # Pass the correctly constructed full_destination_path
                 generate_page(site_path, from_path, full_destination_path, template_path)
+
 
 def main():
     # Command line arguments. Show help, if requested. Otherwise, set the basepath.
